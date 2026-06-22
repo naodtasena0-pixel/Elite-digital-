@@ -8,19 +8,11 @@ bot = telebot.TeleBot(os.environ.get('TELEGRAM_BOT_TOKEN'))
 genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-SYSTEM_PROMPT = """
-You are the Elite Digital AI Agent. 
-Slogan: "Quiet Hustle. Loud Results."
-Your personality is professional, concise, and results-oriented.
-You specialize in high-end web design and digital strategy.
-- When asked about services, present them as "Elite Packages."
-- If asked for contact, direct them to elitedigtal.vercel.app, @naod212, or @Dhino121.
-- If a user asks for something unrelated to web design or business growth, politely steer the conversation back to how Elite Digital can help them scale their online presence.
-- Keep responses sharp, punchy, and professional. No fluff.
-"""
+SYSTEM_PROMPT = "You are the Elite Digital AI Agent. Slogan: 'Quiet Hustle. Loud Results.' Be professional and concise."
 
 @app.route('/api', methods=['POST'])
 def webhook():
+    print("Received a request from Telegram!") # This will show in Vercel logs
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
     bot.process_new_updates([update])
@@ -28,12 +20,13 @@ def webhook():
 
 @bot.message_handler(func=lambda message: True)
 def reply(message):
+    print(f"Processing message: {message.text}") # This will show in Vercel logs
     try:
-        prompt = f"{SYSTEM_PROMPT}\n\nUser message: {message.text}"
-        response = model.generate_content(prompt)
+        response = model.generate_content(f"{SYSTEM_PROMPT}\n\n{message.text}")
         bot.reply_to(message, response.text)
     except Exception as e:
-        bot.reply_to(message, "Elite Digital is currently optimizing. Please try again in a moment.")
+        print(f"Error: {e}") # This will show in Vercel logs
+        bot.reply_to(message, "Elite Digital is optimizing...")
 
 if __name__ == '__main__':
     app.run()
